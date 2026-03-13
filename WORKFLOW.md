@@ -830,6 +830,84 @@ span       - 9 次 - 通用元素
 
 ---
 
+### ⭐ 步骤 3.4：上传书源到图床（可选）
+
+如果需要分享书源给他人，可以使用上传工具生成直链：
+
+```bash
+# 进入tools目录
+cd tools
+
+# 上传书源（使用默认配置 - 鲸落图床）
+python upload_book_source.py book_source_1678901234.json
+```
+
+**输出示例：**
+
+```
+============================================================
+  ✅ 书源上传成功！
+============================================================
+
+📚 书源信息:
+  名称: 示例书源
+  地址: https://www.example.com
+  分组: 小说
+
+📤 上传信息:
+  服务: 鲸落图床
+  时间: 2026-03-13 10:30:45
+  压缩: 否
+
+🔗 下载链接:
+  https://tu.406np.xyz/files/abc123def456.json
+
+💡 使用方法:
+  方法1: 复制链接后，在阅读APP中点击"导入书源"，粘贴链接
+  方法2: 直接打开链接，长按分享到阅读APP
+  💡 提示：可以将链接生成二维码，扫描即可导入
+
+============================================================
+```
+
+**使用场景：**
+- 分享书源给朋友
+- 备份书源到云端
+- 在社区发布书源
+
+**自定义上传配置：**
+
+如果需要使用其他图床服务，创建配置文件（例如 `my_upload_config.json`）：
+
+```json
+{
+  "compress": false,
+  "downloadUrlRule": "$.data.links.url",
+  "summary": "自定义图床",
+  "uploadUrl": "https://your-image-host.com/api/upload",
+  "method": "POST",
+  "headers": {
+    "Accept": "application/json",
+    "Authorization": "Bearer YOUR_TOKEN"
+  },
+  "body": {
+    "file": "fileRequest",
+    "folder": "book_sources"
+  },
+  "type": "multipart/form-data"
+}
+```
+
+然后使用自定义配置上传：
+
+```bash
+python upload_book_source.py book_source.json my_upload_config.json
+```
+
+**详细使用说明** → 查看 `tools/工具使用说明.md` 中的 `upload_book_source.py` 章节
+
+---
+
 ## 检查清单总结
 
 ### 阶段 1：收集信息
@@ -868,6 +946,7 @@ span       - 9 次 - 通用元素
 - [ ] 输出标准 JSON
 - [ ] 导入测试
 - [ ] 验证所有功能
+- [ ] （可选）上传书源到图床
 
 ---
 

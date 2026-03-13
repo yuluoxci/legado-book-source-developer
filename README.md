@@ -28,9 +28,12 @@ legado-book-source-developer/
 ├── tools/                              # 分析工具集合
 │   ├── quick_analyze.py               # ⭐快速网站分析工具（推荐）
 │   ├── js_param_analyzer.py           # ⭐JavaScript参数分析工具
+│   ├── validate_book_source.py        # ⭐书源JSON验证工具
+│   ├── upload_book_source.py          # ⭐书源直链上传工具
 │   ├── analyze_fhysc.py               # 传统网站分析工具
 │   ├── get_book_detail.py             # 获取书籍详情
 │   ├── get_chapter.py                 # 获取章节内容
+│   ├── 工具使用说明.md                # 工具使用文档
 │   └── common.js                      # 网站 JS 文件
 └── references/                         # 知识库和文档
     ├── Legado书源开发完整指南.md       # ⭐完整开发指南（14.6 MB）
@@ -61,7 +64,8 @@ legado-book-source-developer/
   - ✅ 自动搜索可能的搜索接口模式
   - ✅ 自动分析HTML结构
   - ✅ 自动测试搜索接口
-  - ✅ 生成结构化的JSON分析报告
+  - ✅ 生成符合JSON格式的书源
+  - ✅ 自动保存HTML到html_storage
   - ✅ 一次完成多个分析任务，大幅提升开发速度
 
 - **js_param_analyzer.py** - JavaScript参数分析工具
@@ -71,6 +75,20 @@ legado-book-source-developer/
   - ✅ 查找参数生成函数
   - ✅ 查找加密库引用
   - ✅ 支持分析cURL命令
+
+- **validate_book_source.py** - 书源JSON验证工具
+  - ✅ 验证JSON格式
+  - ✅ 验证必需字段（23个书源级别 + 规则级别）
+  - ✅ 验证字段类型
+  - ✅ 验证规则对象
+  - ✅ 生成详细错误报告
+
+- **upload_book_source.py** - 书源直链上传工具
+  - ✅ 一键上传书源到图床
+  - ✅ 生成可分享的直链
+  - ✅ 美化返回结果
+  - ✅ 支持自定义上传配置
+  - ✅ 自动提取下载链接
 
 **传统工具（可选）**
 
@@ -174,7 +192,8 @@ python js_param_analyzer.py --analyze https://www.example.com
 3. ✓ 搜索可能的搜索接口模式
 4. ✓ 分析HTML结构
 5. ✓ 测试搜索接口
-6. ✓ 生成结构化的JSON分析报告
+6. ✓ 生成符合JSON格式的书源
+7. ✓ 保存HTML到html_storage
 
 ### 方式 2：遵循工作流程创建书源
 
@@ -217,11 +236,24 @@ python get_chapter.py
 cd tools
 python quick_analyze.py https://www.example.com
 
-# 工具会自动生成分析报告，包含：
-# - 网站编码
-# - HTML结构
-# - 搜索接口
-# - JavaScript分析
+# 工具会自动生成：
+# - 符合JSON格式的书源
+# - 分析报告（包含网站编码、HTML结构、搜索接口、JavaScript分析）
+# - HTML文件（存储在 references/html_storage/）
+
+# 步骤 2：验证书源JSON格式
+python validate_book_source.py book_source_时间戳.json
+
+# 步骤 3：修改书源（如果需要）
+# 使用文本编辑器打开生成的书源文件，根据实际情况修改规则
+
+# 步骤 4：再次验证
+python validate_book_source.py book_source_时间戳.json
+
+# 步骤 5：上传书源到图床（可选，用于分享）
+python upload_book_source.py book_source_时间戳.json
+
+# 复制返回的直链接，分享给朋友或自己导入
 ```
 
 ### 传统流程（分步骤）
@@ -554,6 +586,7 @@ python test_fixed_regex.py
 1. **SKILL.md** - 完整 Skill 文档，包含源码分析
 2. **WORKFLOW.md** - 完整工作流程详解
 3. **文件结构说明.md** - 文件结构和使用指南
+4. **tools/工具使用说明.md** - 工具使用文档和最佳实践
 
 ### 知识库文档
 4. **references/Legado书源开发完整指南.md** - ⭐完整开发指南（14.6 MB）
