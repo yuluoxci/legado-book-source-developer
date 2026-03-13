@@ -4,17 +4,288 @@
 
 本工作流程分为三个阶段，确保创建的书源可靠可用：
 
-- **阶段 1：收集信息** - 查询知识库、检测编码、获取 HTML
+- **阶段 1：收集信息** - 获取真实源码、分析JS、验证接口
 - **阶段 2：严格审查** - 编写规则、验证语法、处理特殊情况
 - **阶段 3：创建书源** - 生成 JSON、导入测试
+
+## ⚠️ 核心原则
+
+### 绝对禁止
+
+- ❌ **禁止基于假设进行分析**
+- ❌ **禁止不获取真实HTML源码就编写规则**
+- ❌ **禁止不分析JavaScript就推断搜索接口参数**
+- ❌ **禁止不确定时继续下一步**
+
+### 必须做到
+
+- ✅ **必须获取并分析真实HTML源码**
+- ✅ **必须分析网站的JavaScript代码**
+- ✅ **必须通过浏览器Network面板验证真实请求**
+- ✅ **不确定时必须询问用户并提供建议**
+
+### 工作流程图
+
+```
+阶段1：收集信息
+├─ 获取真实HTML源码（必须）
+├─ 分析JavaScript代码（必须）
+├─ 验证搜索接口（必须）
+├─ 遇到不确定的情况？
+│   ├─ 是 → 询问用户，提供建议 → 等待用户回复 → 继续分析
+│   └─ 否 → 继续下一步
+└─ 完成信息收集
+
+阶段2：严格审查
+├─ 基于真实源码编写规则
+├─ 验证每个选择器
+├─ 处理特殊情况
+└─ 完成规则编写
+
+阶段3：创建书源
+├─ 生成完整JSON
+├─ 导入测试
+└─ 验证功能
+```
 
 ---
 
 ## 阶段 1：收集信息
 
-**目标：** 收集所有必要信息，但不创建书源
+**目标：** 基于真实源码收集所有必要信息
 
-### 步骤 1.1：查询知识库
+### ⭐ 步骤 1：使用核心工具快速分析（推荐）
+
+**这是最快速、最准确的方法！**
+
+```bash
+cd tools
+python quick_analyze.py https://www.example.com
+```
+
+**工具会自动完成：**
+1. ✓ 检测网站编码
+2. ✓ 下载并分析JavaScript文件
+3. ✓ 搜索可能的搜索接口模式
+4. ✓ 分析HTML结构
+5. ✓ **保存HTML到 `references/html_storage/`**
+6. ✓ **生成HTML元数据JSON**
+7. ✓ 测试搜索接口
+8. ✓ 生成结构化的JSON分析报告
+9. ✓ **生成符合JSON格式的书源草稿**
+
+**输出文件：**
+```
+tools/
+├── book_source_时间戳.json        # 书源JSON草稿
+└── analysis_report_时间戳.json   # 分析报告
+
+references/html_storage/
+├── abc123.html                    # HTML文件
+├── abc123.meta.json              # HTML元数据
+├── def456.js                     # JavaScript文件
+└── def456.js.meta.json           # JS元数据
+```
+
+**html_storage 结构：**
+```
+references/html_storage/
+├── {md5_hash}.html          # HTML文件
+├── {md5_hash}.meta.json    # HTML元数据（URL、大小、时间戳等）
+├── {md5_hash}.js           # JavaScript文件
+└── {md5_hash}.js.meta.json # JS元数据
+```
+
+**元数据JSON格式：**
+```json
+{
+  "url": "https://www.example.com",
+  "size": 11041,
+  "timestamp": 1771407694.9349854,
+  "datetime": "2026-03-13T10:34:54.934985",
+  "page_type": "home",
+  "storage_path": "references/html_storage/abc123.html"
+}
+```
+
+### ⭐ 步骤 2：验证书源JSON格式（必须！）
+
+```bash
+cd tools
+python validate_book_source.py book_source_时间戳.json
+```
+
+**验证规则：**
+- ✅ 必须是JSON数组格式
+- ✅ 必须包含所有23个书源级别必需字段
+- ✅ 必须包含ruleSearch的9个必需字段
+- ✅ 必须包含ruleToc的5个必需字段
+- ✅ 必须包含ruleContent的7个必需字段
+- ✅ 字段类型必须正确
+
+**验证输出示例：**
+```
+======================================================================
+验证书源JSON: book_source.json
+======================================================================
+✓ 找到 1 个书源
+
+--- 验证书源 1/1 ---
+  书源名称: 示例书源
+  书源URL: https://www.example.com
+  bookList: .book-list
+  bookUrl: a@href
+  name: .title@text
+  author: .author@text
+  coverUrl: img@src
+
+======================================================================
+验证结果
+======================================================================
+
+✓ 验证通过！书源JSON格式正确
+```
+
+### 步骤 3：查看分析报告
+
+```bash
+cd tools
+cat analysis_report_时间戳.json
+```
+
+### 步骤 4：查看保存的HTML文件
+
+```bash
+# 查看HTML
+cat references/html_storage/abc123.html
+
+# 查看元数据
+cat references/html_storage/abc123.meta.json
+```
+
+### ⚠️ 步骤 5：如果工具失败，使用手动方法
+
+**5.1 使用浏览器开发者工具获取真实请求**
+
+**这是最关键的步骤！**
+
+**打开开发者工具：**
+1. 打开目标网站
+2. 按F12打开开发者工具
+3. 切换到 Network 标签
+
+**执行搜索操作：**
+1. 在网站中执行一次搜索
+2. 在 Network 中找到搜索请求
+3. 右键点击请求 → Copy → Copy as cURL
+
+**记录以下信息：**
+```
+Request URL: ______________________
+Request Method: __________________
+Request Headers: __________________
+  - User-Agent: __________________
+  - Content-Type: __________________
+  - 其他重要请求头：__________________
+Request Body: __________________
+  （如果是POST请求）
+Response: __________________
+  - 状态码：__________________
+  - Content-Type：__________________
+  - 响应内容：__________________
+```
+
+**使用Python工具分析cURL：**
+```bash
+cd tools
+python js_param_analyzer.py --curl '复制的cURL命令'
+```
+
+**5.2 获取并保存真实HTML源码到html_storage**
+
+**保存HTML函数：**
+```python
+from pathlib import Path
+import hashlib
+import json
+import time
+from datetime import datetime
+
+# 创建存储目录
+storage_dir = Path('references/html_storage')
+storage_dir.mkdir(parents=True, exist_ok=True)
+
+# 保存HTML函数
+def save_html(url, content, page_type='page'):
+    file_hash = hashlib.md5(url.encode('utf-8')).hexdigest()
+    html_file = storage_dir / f"{file_hash}.html"
+    meta_file = storage_dir / f"{file_hash}.meta.json"
+    
+    # 保存HTML
+    with open(html_file, 'w', encoding='utf-8') as f:
+        f.write(content)
+    
+    # 生成元数据
+    metadata = {
+        'url': url,
+        'size': len(content),
+        'timestamp': time.time(),
+        'datetime': datetime.now().isoformat(),
+        'page_type': page_type,
+        'storage_path': str(html_file.relative_to(storage_dir.parent))
+    }
+    
+    # 保存元数据JSON
+    with open(meta_file, 'w', encoding='utf-8') as f:
+        json.dump(metadata, f, ensure_ascii=False, indent=2)
+    
+    return html_file, metadata
+
+# 获取并保存首页
+import requests
+headers = {'User-Agent': 'Mozilla/5.0...'}
+response = requests.get('https://example.com', headers=headers)
+
+html_file, metadata = save_html('https://example.com', response.text, 'home')
+print(f"✓ 首页已保存: {html_file}")
+print(f"✓ 元数据: {metadata}")
+```
+
+**必须获取的页面：**
+```python
+# 1. 首页
+save_html('https://example.com', home_html, 'home')
+
+# 2. 搜索页（包含搜索结果的HTML）
+save_html('https://example.com/search?q=test', search_html, 'search')
+
+# 3. 书籍详情页
+save_html('https://example.com/book/123', detail_html, 'detail')
+
+# 4. 目录页
+save_html('https://example.com/book/123/toc', toc_html, 'toc')
+
+# 5. 章节内容页
+save_html('https://example.com/chapter/1', content_html, 'content')
+```
+
+**5.3 分析JavaScript代码**
+
+**使用JS参数分析工具：**
+```bash
+cd tools
+python js_param_analyzer.py --analyze https://www.example.com
+```
+
+**工具会自动完成：**
+1. ✓ 提取所有JavaScript代码
+2. ✓ 查找搜索相关函数
+3. ✓ 查找API端点
+4. ✓ 查找参数生成函数
+5. ✓ 查找加密库引用
+6. ✓ 生成参数分析报告
+
+### 步骤 1.3：查询知识库（参考已有知识）
 
 **必须查询的内容：**
 
@@ -33,90 +304,87 @@
    - 了解：134 个真实书源的模式
    - 重点：最常用的选择器和提取类型
 
-4. **POST 请求配置**（如果网站使用 POST）
-   - 文件：`references/post_request_config.md`
-   - 了解：method, body, charset 配置
+4. **用户交互指南**（重要！）
+   - 文件：`references/用户交互指南.md`
+   - 了解：遇到不确定情况如何处理
+   - 重点：何时询问用户，如何提供建议
 
 **查询示例：**
 ```bash
 cat references/css_selector_rules.md | grep "@text"
 cat references/book_source_templates.md | grep "笔趣阁"
+cat references/用户交互指南.md | grep "不确定"
 ```
 
-### 步骤 1.2：检测网站编码
+### 步骤 1.4：验证搜索接口（必须！）
 
-**为什么重要：**
-- 中文网站可能使用 GBK 编码
-- 不检测会导致中文乱码
-- 编码只需要检测一次
+**基于真实Network请求验证：**
 
-**检测方法：**
+```python
+import requests
 
-```bash
-cd tools
-python analyze_fhysc.py
+# 从cURL中提取的信息
+url = "https://api.example.com/search"
+headers = {
+    'User-Agent': 'Mozilla/5.0...',
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest'
+}
+data = {
+    'keyword': '斗破苍穹',
+    'page': 1
+}
+
+response = requests.post(url, json=data, headers=headers)
+print(f"状态码: {response.status_code}")
+print(f"响应: {response.text[:500]}")
 ```
 
-**输出示例：**
-```
-状态码: 200
-响应编码: GBK
-Content-Type: text/html; charset=gbk
-实际编码: GBK
-```
+**检查清单：**
+- [ ] URL是否正确
+- [ ] 方法（GET/POST）是否正确
+- [ ] 请求头是否完整
+- [ ] 参数是否正确
+- [ ] 响应是否包含搜索结果
 
-**记录检测结果：**
-- 如果是 GBK → 后续所有请求都要加 `"charset":"gbk"`
-- 如果是 UTF-8 → 不需要指定（默认）
+**如果失败，查阅 `references/用户交互指南.md` 中的场景1和场景3**
 
-**重要原则：**
-1. 编码只需要检测一次
-2. 在流程开始时检测
-3. 后续所有操作都使用这个编码
-4. 避免重复检测
+### 步骤 1.5：分析HTML结构（必须基于真实HTML！）
 
-### 步骤 1.3：获取真实 HTML
+**不要猜测！基于保存的HTML文件分析：**
 
-**使用检测到的编码获取 HTML：**
+```python
+from bs4 import BeautifulSoup
 
-```bash
-cd tools
+# 加载真实HTML
+with open('search.html', 'r', encoding='utf-8') as f:
+    html = f.read()
 
-# 获取搜索页
-python get_book_detail.py
+soup = BeautifulSoup(html, 'html.parser')
 
-# 获取章节内容
-python get_chapter.py
-```
+# 查找书籍列表
+book_items = soup.select('.book-list .item, .result-list li')
+if book_items:
+    print(f"✓ 找到 {len(book_items)} 个书籍项")
+    # 打印第一个书籍项的结构
+    print(book_items[0].prettify())
+else:
+    print("✗ 未找到书籍列表，需要查找其他选择器")
 
-**关键检查清单：**
+# 查找常见元素
+common_selectors = {
+    '书籍列表': ['.book-list', '.result-list', '.hot-sale'],
+    '书名': ['.title', 'h1', 'h3', 'a'],
+    '作者': ['.author', '.writer', '.by'],
+    '封面': ['img', '.cover', '.book-cover']
+}
 
-- [ ] 使用正确的 HTTP 方法（GET 或 POST）
-- [ ] 使用正确的编码（UTF-8 或 GBK）
-- [ ] 获取完整 HTML 源代码（不截断）
-- [ ] 检查懒加载（data-original vs src）
-- [ ] 检查搜索页是否有封面图片
-- [ ] 永久保存 HTML 供后续分析
-
-**HTML 保存示例：**
-```bash
-# 搜索页
-fhysc_search_page.html
-
-# 书籍详情页
-fhysc_book_detail.html
-
-# 章节内容页
-fhysc_chapter_content.html
-```
-
-### 步骤 1.4：分析 HTML 结构
-
-**使用浏览器开发者工具或分析工具：**
-
-```bash
-cd tools
-python analyze_fhysc.py
+for label, selectors in common_selectors.items():
+    for selector in selectors:
+        elements = soup.select(selector)
+        if elements:
+            print(f"✓ {label} ({selector}): {len(elements)} 个")
+            break
 ```
 
 **需要识别的内容：**
@@ -165,6 +433,56 @@ python analyze_fhysc.py
 - [ ] 作者和分类信息合并 → 使用正则表达式拆分
 - [ ] 信息包含广告 → 使用 `@ownText` 或正则清理
 - [ ] 有分页 → 配置 `nextTocUrl` 或 `nextContentUrl`
+
+### 步骤 1.6：遇到不确定的情况？询问用户！
+
+**不要继续！先查阅 `references/用户交互指南.md`**
+
+**常见的需要询问的情况：**
+
+1. ❌ 无法确定搜索接口参数生成方式
+   → 查阅：场景1 - 搜索接口参数来源不明
+
+2. ❌ HTML结构复杂或有动态加载
+   → 查阅：场景2 - HTML结构复杂或有动态加载
+
+3. ❌ 检测到反爬虫机制
+   → 查阅：场景3 - 检测到反爬虫机制
+
+4. ❌ GBK编码导致乱码
+   → 查阅：场景4 - GBK编码导致乱码
+
+5. ❌ 找不到书籍列表容器
+   → 查阅：场景5 - 找不到书籍列表容器
+
+6. ❌ nextContentUrl判断不明确
+   → 查阅：场景6 - nextContentUrl判断不明确
+
+7. ❌ 封面图片使用懒加载
+   → 查阅：场景7 - 封面图片使用懒加载
+
+8. ❌ 作者和分类信息合并
+   → 查阅：场景8 - 作者和分类信息合并
+
+**询问格式：**
+```
+【问题】简洁描述问题
+
+观察到的现象：
+- ✓ 发现1
+- ✓ 发现2
+- ✗ 问题点
+
+【建议/分析】
+- 分析1
+- 分析2
+
+请用户提供：
+- 需要的信息1
+- 需要的信息2
+```
+
+**等待用户回复后再继续！**
 
 ---
 
