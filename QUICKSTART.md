@@ -4,6 +4,89 @@
 
 如果你已经熟悉 HTML 和 CSS，可以快速开始创建书源。
 
+## ⚡ 最快开始方法（推荐）
+
+### 步骤 1：使用快速搜索地址提取工具
+
+```bash
+cd tools
+python quick_search_url_extractor.py https://www.example.com
+```
+
+**工具会自动完成：**
+- ✅ 识别搜索表单
+- ✅ 生成搜索地址
+- ✅ 提取发现规则
+- ✅ 创建书源框架
+
+**输出示例：**
+```
+✓ 成功识别 1 个搜索表单
+✓ 搜索字段: q
+✓ 搜索地址: /search?q={{key}}
+✓ 发现规则 (5 个)
+✓ 书源草稿: book_source_draft_1773468883.json
+```
+
+### 步骤 2：验证搜索地址
+
+将 `{{key}}` 替换为测试关键词，使用浏览器测试：
+
+```
+工具生成: /search?q={{key}}
+测试地址: /search?q=斗破苍穹
+```
+
+### 步骤 3：补充完整规则
+
+根据生成的草稿，补充以下规则：
+
+```json
+{
+  "ruleSearch": {
+    "bookList": ".book-list .item",      // 需要补充
+    "name": ".title@text",                // 需要补充
+    "author": ".author@text",             // 需要补充
+    "bookUrl": "a@href"                   // 需要补充
+  },
+  "ruleToc": {
+    "chapterList": "#chapter-list li",    // 需要补充
+    "chapterName": "a@text",              // 需要补充
+    "chapterUrl": "a@href"               // 需要补充
+  },
+  "ruleContent": {
+    "content": "#content@html"           // 需要补充
+  }
+}
+```
+
+### 步骤 4：验证和测试
+
+```bash
+python validate_book_source.py book_source_draft_xxx.json
+```
+
+**完成！导入Legado测试。**
+
+---
+
+### 如果快速方法失败？
+
+如果工具未找到搜索表单，使用深度分析：
+
+```bash
+cd tools
+python quick_analyze.py https://www.example.com
+```
+
+详细流程请查看：[WORKFLOW.md](WORKFLOW.md)
+
+---
+
+## 手动创建书源
+
+如果工具无法满足需求，可以手动创建书源。
+
 ### 场景 1：标准小说站（最简单）
 
 ```json
